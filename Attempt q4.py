@@ -89,11 +89,15 @@ class Psat_finder(wx.Frame):
 #Bind Events
 
         self.Button_calc_and_plot.Bind(wx.EVT_BUTTON, self.calculate_and_plot)
-        self.T_slider.Bind(wx.EVT_SLIDER, self.calculate_and_plot)
+        self.T_slider.Bind(wx.EVT_SLIDER, self.setlabel)
+        self.T_slider.Bind(wx.EVT_SCROLL_CHANGED, self.calculate_and_plot)
         
 #Initialise Window
         self.Centre()
         self.Show()
+
+    def setlabel(self, sevent):
+        self.T_slider_label.SetLabel('Isotherm Temperature = ' + str(self.T_slider.GetValue()) + ' K')
 
     def calculate_and_plot(self, event):
         R = 8.314472
@@ -103,7 +107,7 @@ class Psat_finder(wx.Frame):
         T = float(self.T_slider.GetValue())
         T_Text = str(self.T_slider.GetValue())
 
-        self.T_slider_label.SetLabel('Isotherm Temperature = ' + T_Text + ' K')
+        
 
         Tc_text = self.Tc_input.GetValue()
         Pc_text = self.Pc_input.GetValue()
@@ -111,7 +115,7 @@ class Psat_finder(wx.Frame):
 
         if (Tc_text != '') and (Pc_text != '') and (m_text != ''):
             Tc = float(Tc_text)
-            Pc = float(Pc_text)*101.325
+            Pc = float(Pc_text)*100
             m = float(m_text)
 
 # Bereken aCrit
@@ -132,8 +136,8 @@ class Psat_finder(wx.Frame):
             Data = np.zeros((1001))
             
             for k in range(0,1001):
-                Data[k] = 1000*((0.1**(10-0.01*k))) + b+0.01
-            Line_Data = self.vdw(T, Data, a, b)/(101.325)
+                Data[k] = 100000*((0.1**(10-0.01*k))) + b+0.01
+            Line_Data = self.vdw(T, Data, a, b)/(100)
             Plot_Data1 = np.vstack((Data, Line_Data)).T
             
             Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='blue')     
@@ -141,25 +145,83 @@ class Psat_finder(wx.Frame):
             
             if T < Tc:
                 maxminV = self.maxmin(Data, T, Tc, a, b) 
-                Lmin = self.vdw(T, float(maxminV[0]), a, b)/(101.325)
-                Rmax = self.vdw(T, float(maxminV[1]), a, b)/(101.325)
+                Lmin = self.vdw(T, float(maxminV[0]), a, b)/(100)
+                Rmax = self.vdw(T, float(maxminV[1]), a, b)/(100)
                 
-                Psatguess = (Lmin + Rmax)/2
-                
-                GuessV = self.roots(T, Data, Plot_Data1, Psatguess, a, b)
-                
-                Marker1 = self.vdw(T, float(GuessV[0]), a, b)/(101.325)
-                Marker2 = self.vdw(T, float(GuessV[1]), a, b)/(101.325)
-                Marker3 = self.vdw(T, float(GuessV[2]), a, b)/(101.325)  
+                Psatguess = Rmax
+
+                GuessV = self.roots(T, Data, Psatguess, a, b)
+                vmarkers = GuessV[3:]  
+
+                gueserror =  self.integral(T, vmarkers, Data, Psatguess, a, b)
+                iterations = 0
+                sign = abs(gueserror)/gueserror
+                check = 1
+                while (abs(gueserror) > 0.1) and (iterations <= 1000) and (check == 1):
+                    if gueserror > 10000000:
+                        Psatguess += -10
+                    elif gueserror > 1000000 and gueserror <= 10000000 :
+                        Psatguess += -1
+                    elif gueserror > 100000 and gueserror <= 1000000 :
+                        Psatguess += -0.1
+                    elif gueserror > 10000 and gueserror <= 100000 :
+                        Psatguess += -0.01
+                    elif gueserror > 1000 and gueserror <= 10000 :
+                        Psatguess += -0.001
+                    elif gueserror > 100 and gueserror <= 1000 :
+                        Psatguess += -0.0001
+                    elif gueserror > 10 and gueserror <= 100 :
+                        Psatguess += -0.00001
+                    elif gueserror > 1 and gueserror <= 10 :
+                        Psatguess += -0.000001
+                    elif gueserror > 0 and gueserror <= 1 :
+                        Psatguess += -0.0000001
+                    elif gueserror < -100000000:
+                        Psatguess += 10
+                    elif gueserror <= -1000000 and gueserror >= - 100000000:
+                        Psatguess += 1
+                    elif gueserror <= -100000 and gueserror >= - 10000000:
+                        Psatguess += 0.1
+                    elif gueserror <= -10000 and gueserror >= - 100000:
+                        Psatguess += 0.01
+                    elif gueserror <= -1000 and gueserror >= - 10000:
+                        Psatguess += 0.001
+                    elif gueserror <= -100 and gueserror >= - 1000:
+                        Psatguess += 0.0001
+                    elif gueserror <= -10 and gueserror >= - 100:
+                        Psatguess += 0.00001
+                    elif gueserror <= -1 and gueserror >= - 10:
+                        Psatguess += 0.000001
+                    elif gueserror <= -0 and gueserror >= - 1:
+                        Psatguess += 0.0000001
+
+
+                    GuessV = self.roots(T, Data, Psatguess, a, b)
+                    vmarkers = GuessV[3:]  
+
+                    newgueserror = self.integral(T, vmarkers, Data, Psatguess, a, b)
+                    newsign = abs(newgueserror)/newgueserror
+                    check =  newsign/sign    
+                    sign = newsign
+                    gueserror = newgueserror
+                    
+                    print gueserror, Psatguess, sign
+                    iterations += 1
+
+                Psat = Psatguess
+                self.T_slider_label.SetLabel("Isotherm Temperature = 273 K , Psat = " + str(round(Psat,6))+' Bar')   
+                                
+                Marker1 = self.vdw(T, float(GuessV[0]), a, b)/(100)
+                Marker2 = self.vdw(T, float(GuessV[1]), a, b)/(100)
+                Marker3 = self.vdw(T, float(GuessV[2]), a, b)/(100)  
                 
                 Markers = np.hstack((Marker1, Marker2, Marker3))
                 
-                Markerdata = np.vstack((GuessV, Markers)).T
-                print Markerdata
+                Markerdata = np.vstack((GuessV[:3], Markers)).T
                 
                 Markerplot = PolyMarker(Markerdata, colour= 'green')
+
                 
-                 
                 
                 self.canvas.Draw(PlotGraphics([Isotherm, Markerplot], '', ' V', 'P'))
             else:
@@ -224,46 +286,57 @@ class Psat_finder(wx.Frame):
             return [L, R]
 
 
-    def roots(self,T, Vdata, Pdata, Psatguess, a , b):
+    def roots(self,T, Vdata, Psatguess, a , b):
         minV = min(Vdata)
         maxV = max(Vdata)
-        newdata = Pdata - Psatguess
 
         check = 1
-        d = self.vdw(T, minV, a, b)
+        d = self.vdw(T, minV, a, b) - Psatguess
         sign = abs(d)/d
         i = 0
         while (check == 1) and (i < 1000):
-            d = self.vdw(T, Vdata[i], a, b)
+            d = self.vdw(T, Vdata[i], a, b) - Psatguess
             newsign = abs(d)/d
             check = sign/newsign
             sign = newsign
             i += 1
-        R1 = Vdata[i-1]
+        i1 = i-1
+        R1 = Vdata[i1]
 
         check = 1
-        d = self.vdw(T, Vdata[i], a, b)
+        d = self.vdw(T, Vdata[i], a, b) - Psatguess
         sign = abs(d)/d
         while (check == 1) and (i < 1000):
-            d = self.vdw(T, Vdata[i], a, b)
+            d = self.vdw(T, Vdata[i], a, b) - Psatguess
             newsign = abs(d)/d
             check = sign/newsign
             sign = newsign
             i += 1
-        R2 = Vdata[i-1]
+        i2 = i-1
+        R2 = Vdata[i2]
 
         check = 1
-        d = self.vdw(T, Vdata[i], a, b)
+        d = self.vdw(T, Vdata[i], a, b) - Psatguess
         sign = abs(d)/d
-        while (check == 1) and (i < 1000):
-            d = self.vdw(T, Vdata[i], a, b)
+        while (check == 1) and (i <= 1000):
+            d = self.vdw(T, Vdata[i], a, b) - Psatguess
             newsign = abs(d)/d
             check = sign/newsign
             sign = newsign
             i += 1
-        R3 = Vdata[i-1]
+        i3 = i-1
+        R3 = Vdata[i3]
         
-        return [R1, R2, R3]
+        return [R1, R2, R3, i1, i2, i3]
+        
+    def integral(self, T, iMarkers, Vdata, Psatguess, a, b):
+        LHarea = 0
+        for inter in range(iMarkers[0], iMarkers[1]-2,2):
+            LHarea += (Vdata[inter+2]-Vdata[inter]/2)*((self.vdw(T, float(Vdata[inter]), a, b) - Psatguess) + 4*(self.vdw(T, float(Vdata[inter+1]), a, b) - Psatguess) + (self.vdw(T, float(Vdata[inter+2]), a, b) - Psatguess))   
+        RHarea = 0
+        for inter in range(iMarkers[1], iMarkers[2]-2,2):
+            RHarea += (Vdata[inter+2]-Vdata[inter]/2)*((self.vdw(T, float(Vdata[inter]), a, b) - Psatguess) + 4*(self.vdw(T, float(Vdata[inter+1]), a, b) - Psatguess) + (self.vdw(T, float(Vdata[inter+2]), a, b) - Psatguess))  
+        return abs(LHarea)-abs(RHarea)
 
 if __name__ == '__main__':
 
