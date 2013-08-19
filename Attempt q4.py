@@ -126,17 +126,33 @@ class Psat_finder(wx.Frame):
             self.b_val.SetLabel('b = ' + self.b_label)
             self.m_val.SetLabel('m = ' + m_text)
 
-#Calculate datapoints for vdw EOS
-
-            Vc = (8./9)*ac/(R*Tc)   
-            Data = np.arange(b+0.1,1000.1+b,0.1)
-            Line_Data = (self.vdw(T, Data, self.a(ac, m, T, Tc), b))/(101.325)
-            Plot_Data = np.vstack((Data, Line_Data)).T
+#Calculate datapoints for vdw EOS 
+            a = self.a(ac, m, T, Tc)
             
-            Isotherm = PolyLine(Plot_Data, legend= 'Isotherm, T = ' + T_Text, colour='red')
+            Data = np.zeros((1001))
             
-            self.canvas.Draw(PlotGraphics([Isotherm], '', ' V', 'P'))
+            for k in range(0,1001):
+                Data[k] = 1000*((0.1**(10-0.01*k))) + b+0.01
+            print Data
+            Line_Data = self.vdw(T, Data, a, b)/(101.325)
+            Plot_Data1 = np.vstack((Data, Line_Data)).T
+            
+            Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='red')     
+               
+            
+            if T < Tc:
+                MarkersV = self.roots(Data, T, Tc, a, b) 
+                MarkerL = self.vdw(T, float(MarkersV[0]), a, b)/(101.325)
+                MarkerR = self.vdw(T, float(MarkersV[1]), a, b)/(101.325)
+                MarkersP = np.hstack((MarkerL, MarkerR))
+                Markerdata =  np.vstack((MarkersV, MarkersP)).T
+                Markers = PolyMarker(Markerdata, legend= 'Markers') 
+                self.canvas.Draw(PlotGraphics([Isotherm, Markers], '', ' V', 'P'))
+            else:
+                self.canvas.Draw(PlotGraphics([Isotherm], '', ' V', 'P'))    
             self.canvas.setLogScale((True, False))
+            
+            
 
 # a parameter function
     def a(self, ac, m, T, Tc):
@@ -149,11 +165,57 @@ class Psat_finder(wx.Frame):
     def vdw(self, T, V, a, b):
         R = 8.314472
         term1 = R*T/(V-b)
-        term2 = a/(V**2)
-        P = term1-term2 
-        return P        
+        term2 = -a/(V**2)
+        P = term1+term2 
+        return P 
         
+    def d_vdw_dV(self, T, V, a, b):
+        R = 8.314472
+        term1 = -R*T/((V-b)**2)
+        term2 = 2*a/(V**3)
+        dPdV = term1+term2 
+        return dPdV
+        
+    def d2_vdw_dV2(self, T, V, a, b): 
+        R = 8.314472
+        term1 = 2*R*T/((V-b)**3)
+        term2 = -6*a/(V**4)
+        d2PdV2 = term1+term2 
+        return d2PdV2
 
+    def roots(self, Data, T, Tc, a, b):
+#Find the minimum and maximum point
+        minV = min(Data)
+        maxV = max(Data)
+        
+        if T < Tc:
+        # Left side derivative change
+            check = 1
+            d = self.d_vdw_dV(T, minV, a, b)
+            sign = abs(d)/d
+            i = 0
+            while (check == 1) and (i < 1000):
+                d = self.d_vdw_dV(T, Data[i], a, b)
+                newsign = abs(d)/d
+                check = sign/newsign
+                sign = newsign
+                i += 1
+            L = Data[i-1]
+        # Right side derivative change
+            check = 1
+            d = self.d_vdw_dV(T, maxV, a, b)
+            sign = abs(d)/d
+            i = 1000
+            while (check == 1) and (i > 0):
+                d = self.d_vdw_dV(T, Data[i], a, b)
+                newsign = abs(d)/d
+                check = sign/newsign
+                sign = newsign
+                i += -1
+            R = Data[i+1]
+            
+            return [L, R]
+            
 if __name__ == '__main__':
 
     app = wx.App()
