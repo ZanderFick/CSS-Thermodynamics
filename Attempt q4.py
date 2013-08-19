@@ -24,6 +24,8 @@ class Psat_finder(wx.Frame):
 
         self.m_val = wx.StaticText(self.ButtonPanel, label="m = ")
         
+        self.P_sat = wx.StaticText(self.ButtonPanel, label="Psat = ")
+        
         
         self.T_unit = wx.StaticText(self.ButtonPanel, label="Kelvin ")
         
@@ -63,9 +65,10 @@ class Psat_finder(wx.Frame):
 
         self.panelsizer.Add(self.ac_val, (0, 2))
         self.panelsizer.Add(self.T_unit, (1, 1))
-        self.panelsizer.Add(self.b_val, (2, 2))
+        self.panelsizer.Add(self.b_val, (1, 2))
         self.panelsizer.Add(self.P_unit, (3, 1))
-        self.panelsizer.Add(self.m_val, (4, 2))
+        self.panelsizer.Add(self.m_val, (2, 2))
+        self.panelsizer.Add(self.P_sat, (4, 2))
 
         self.panelsizer.Add(self.Button_calc_and_plot, (5, 1))
         
@@ -141,7 +144,7 @@ class Psat_finder(wx.Frame):
             Plot_Data1 = np.vstack((Data, Line_Data)).T
             
             Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='blue')     
-               
+
             
             if T < Tc:
                 maxminV = self.maxmin(Data, T, Tc, a, b) 
@@ -149,67 +152,73 @@ class Psat_finder(wx.Frame):
                 Rmax = self.vdw(T, float(maxminV[1]), a, b)/(100)
                 
                 Psatguess = Rmax
+                
+                guessrange = abs(Lmin - Rmax)
 
                 GuessV = self.roots(T, Data, Psatguess, a, b)
                 vmarkers = GuessV[3:]  
 
                 gueserror =  self.integral(T, vmarkers, Data, Psatguess, a, b)
+                print gueserror
                 iterations = 0
                 sign = abs(gueserror)/gueserror
                 check = 1
-                while (abs(gueserror) > 0.1) and (iterations <= 1000) and (check == 1):
+                while (abs(gueserror) > 0.1) and (iterations <= 1000) and (check == 1):                
                     if gueserror > 10000000:
-                        Psatguess += -10
+                        Psatguess += -0.01*guessrange
                     elif gueserror > 1000000 and gueserror <= 10000000 :
-                        Psatguess += -1
+                        Psatguess += -0.001*guessrange
                     elif gueserror > 100000 and gueserror <= 1000000 :
-                        Psatguess += -0.1
+                        Psatguess += -0.0001*guessrange
                     elif gueserror > 10000 and gueserror <= 100000 :
-                        Psatguess += -0.01
+                        Psatguess += -0.000001*guessrange
                     elif gueserror > 1000 and gueserror <= 10000 :
-                        Psatguess += -0.001
+                        Psatguess += -0.0000001*guessrange
                     elif gueserror > 100 and gueserror <= 1000 :
-                        Psatguess += -0.0001
+                        Psatguess += -0.00000001*guessrange
                     elif gueserror > 10 and gueserror <= 100 :
-                        Psatguess += -0.00001
+                        Psatguess += -0.000000001*guessrange
                     elif gueserror > 1 and gueserror <= 10 :
-                        Psatguess += -0.000001
+                        Psatguess += -0.0000000001*guessrange
                     elif gueserror > 0 and gueserror <= 1 :
-                        Psatguess += -0.0000001
+                        Psatguess += -0.00000000001*guessrange
                     elif gueserror < -100000000:
-                        Psatguess += 10
+                        Psatguess += 0.01*guessrange
                     elif gueserror <= -1000000 and gueserror >= - 100000000:
-                        Psatguess += 1
+                        Psatguess += 0.001*guessrange
                     elif gueserror <= -100000 and gueserror >= - 10000000:
-                        Psatguess += 0.1
+                        Psatguess += 0.0001*guessrange
                     elif gueserror <= -10000 and gueserror >= - 100000:
-                        Psatguess += 0.01
+                        Psatguess += 0.000001*guessrange
                     elif gueserror <= -1000 and gueserror >= - 10000:
-                        Psatguess += 0.001
+                        Psatguess += 0.0000001*guessrange
                     elif gueserror <= -100 and gueserror >= - 1000:
-                        Psatguess += 0.0001
+                        Psatguess += 0.00000001*guessrange
                     elif gueserror <= -10 and gueserror >= - 100:
-                        Psatguess += 0.00001
+                        Psatguess += 0.000000001*guessrange
                     elif gueserror <= -1 and gueserror >= - 10:
-                        Psatguess += 0.000001
+                        Psatguess += 0.000000001*guessrange
                     elif gueserror <= -0 and gueserror >= - 1:
-                        Psatguess += 0.0000001
+                        Psatguess += 0.0000000000001*guessrange
 
 
                     GuessV = self.roots(T, Data, Psatguess, a, b)
                     vmarkers = GuessV[3:]  
-
-                    newgueserror = self.integral(T, vmarkers, Data, Psatguess, a, b)
-                    newsign = abs(newgueserror)/newgueserror
-                    check =  newsign/sign    
-                    sign = newsign
-                    gueserror = newgueserror
                     
-                    print gueserror, Psatguess, sign
+                    newgueserror = self.integral(T, vmarkers, Data, Psatguess, a, b)
+                    if newgueserror !=0:
+                        newsign = abs(newgueserror)/newgueserror
+                        check =  newsign/sign    
+                        sign = newsign
+                        gueserror = newgueserror
+                    else:
+                        check = 0
+                    
+                    
                     iterations += 1
-
-                Psat = Psatguess
-                self.T_slider_label.SetLabel("Isotherm Temperature = 273 K , Psat = " + str(round(Psat,6))+' Bar')   
+                    Psat = Psatguess
+                    self.P_sat.SetLabel(" Psat = " + str(round(Psat,6))+' Bar')    
+                   
                                 
                 Marker1 = self.vdw(T, float(GuessV[0]), a, b)/(100)
                 Marker2 = self.vdw(T, float(GuessV[1]), a, b)/(100)
