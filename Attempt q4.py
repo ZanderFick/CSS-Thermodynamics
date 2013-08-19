@@ -87,7 +87,7 @@ class Psat_finder(wx.Frame):
 
         self.ButtonPanel.SetSizerAndFit(self.panelsizer)
 
-        self.SetSizerAndFit(self.windowSizer)
+        self.SetSizer(self.windowSizer)
 
 #Bind Events
 
@@ -159,7 +159,6 @@ class Psat_finder(wx.Frame):
                 vmarkers = GuessV[3:]  
 
                 gueserror =  self.integral(T, vmarkers, Data, Psatguess, a, b)
-                print gueserror
                 iterations = 0
                 sign = abs(gueserror)/gueserror
                 check = 1
