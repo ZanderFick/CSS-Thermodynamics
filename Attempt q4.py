@@ -133,21 +133,35 @@ class Psat_finder(wx.Frame):
             
             for k in range(0,1001):
                 Data[k] = 1000*((0.1**(10-0.01*k))) + b+0.01
-            print Data
             Line_Data = self.vdw(T, Data, a, b)/(101.325)
             Plot_Data1 = np.vstack((Data, Line_Data)).T
             
-            Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='red')     
+            Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='blue')     
                
             
             if T < Tc:
-                MarkersV = self.roots(Data, T, Tc, a, b) 
-                MarkerL = self.vdw(T, float(MarkersV[0]), a, b)/(101.325)
-                MarkerR = self.vdw(T, float(MarkersV[1]), a, b)/(101.325)
-                MarkersP = np.hstack((MarkerL, MarkerR))
-                Markerdata =  np.vstack((MarkersV, MarkersP)).T
-                Markers = PolyMarker(Markerdata, legend= 'Markers') 
-                self.canvas.Draw(PlotGraphics([Isotherm, Markers], '', ' V', 'P'))
+                maxminV = self.maxmin(Data, T, Tc, a, b) 
+                Lmin = self.vdw(T, float(maxminV[0]), a, b)/(101.325)
+                Rmax = self.vdw(T, float(maxminV[1]), a, b)/(101.325)
+                
+                Psatguess = (Lmin + Rmax)/2
+                
+                GuessV = self.roots(T, Data, Plot_Data1, Psatguess, a, b)
+                
+                Marker1 = self.vdw(T, float(GuessV[0]), a, b)/(101.325)
+                Marker2 = self.vdw(T, float(GuessV[1]), a, b)/(101.325)
+                Marker3 = self.vdw(T, float(GuessV[2]), a, b)/(101.325)  
+                
+                Markers = np.hstack((Marker1, Marker2, Marker3))
+                
+                Markerdata = np.vstack((GuessV, Markers)).T
+                print Markerdata
+                
+                Markerplot = PolyMarker(Markerdata, colour= 'green')
+                
+                 
+                
+                self.canvas.Draw(PlotGraphics([Isotherm, Markerplot], '', ' V', 'P'))
             else:
                 self.canvas.Draw(PlotGraphics([Isotherm], '', ' V', 'P'))    
             self.canvas.setLogScale((True, False))
@@ -175,15 +189,8 @@ class Psat_finder(wx.Frame):
         term2 = 2*a/(V**3)
         dPdV = term1+term2 
         return dPdV
-        
-    def d2_vdw_dV2(self, T, V, a, b): 
-        R = 8.314472
-        term1 = 2*R*T/((V-b)**3)
-        term2 = -6*a/(V**4)
-        d2PdV2 = term1+term2 
-        return d2PdV2
 
-    def roots(self, Data, T, Tc, a, b):
+    def maxmin(self, Data, T, Tc, a, b):
 #Find the minimum and maximum point
         minV = min(Data)
         maxV = max(Data)
@@ -215,7 +222,49 @@ class Psat_finder(wx.Frame):
             R = Data[i+1]
             
             return [L, R]
-            
+
+
+    def roots(self,T, Vdata, Pdata, Psatguess, a , b):
+        minV = min(Vdata)
+        maxV = max(Vdata)
+        newdata = Pdata - Psatguess
+
+        check = 1
+        d = self.vdw(T, minV, a, b)
+        sign = abs(d)/d
+        i = 0
+        while (check == 1) and (i < 1000):
+            d = self.vdw(T, Vdata[i], a, b)
+            newsign = abs(d)/d
+            check = sign/newsign
+            sign = newsign
+            i += 1
+        R1 = Vdata[i-1]
+
+        check = 1
+        d = self.vdw(T, Vdata[i], a, b)
+        sign = abs(d)/d
+        while (check == 1) and (i < 1000):
+            d = self.vdw(T, Vdata[i], a, b)
+            newsign = abs(d)/d
+            check = sign/newsign
+            sign = newsign
+            i += 1
+        R2 = Vdata[i-1]
+
+        check = 1
+        d = self.vdw(T, Vdata[i], a, b)
+        sign = abs(d)/d
+        while (check == 1) and (i < 1000):
+            d = self.vdw(T, Vdata[i], a, b)
+            newsign = abs(d)/d
+            check = sign/newsign
+            sign = newsign
+            i += 1
+        R3 = Vdata[i-1]
+        
+        return [R1, R2, R3]
+
 if __name__ == '__main__':
 
     app = wx.App()
