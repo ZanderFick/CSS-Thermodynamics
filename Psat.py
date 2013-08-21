@@ -20,7 +20,6 @@ def  Psat(T, Tc, Pcbar, m):
     V_extremes_i = numpy.real(d_vdw_roots(T, aP, b))
     V_extremes_i = V_extremes_i[V_extremes_i>b]
     Psat_guess_i = vdw(T, aP, b, V_extremes_i[0], 0)/2
-    print 
 
 #Find real Psat
     def goal_func(Pguess):
