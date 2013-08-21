@@ -1,6 +1,7 @@
 import wx
 from wx.lib.plot import PlotCanvas, PlotGraphics, PolyMarker, PolyLine
 import numpy as np
+import Psat
 
 
 class Psat_finder(wx.Frame):
@@ -235,116 +236,7 @@ class Psat_finder(wx.Frame):
             else:
                 self.canvas.Draw(PlotGraphics([Isotherm], '', ' V', 'P'))    
             self.canvas.setLogScale((True, False))
-            
-            
 
-# a parameter function
-    def a(self, ac, m, T, Tc):
-        Tr = T/Tc
-        exponent = m*(1-Tr)
-        a = ac*(np.e)**exponent
-        return a
-
-# Van der Waals EOS
-    def vdw(self, T, V, a, b):
-        R = 8.314472
-        term1 = R*T/(V-b)
-        term2 = -a/(V**2)
-        P = term1+term2 
-        return P 
-        
-    def d_vdw_dV(self, T, V, a, b):
-        R = 8.314472
-        term1 = -R*T/((V-b)**2)
-        term2 = 2*a/(V**3)
-        dPdV = term1+term2 
-        return dPdV
-
-    def maxmin(self, Data, T, Tc, a, b):
-#Find the minimum and maximum point
-        minV = min(Data)
-        maxV = max(Data)
-        
-        if T < Tc:
-        # Left side derivative change
-            check = 1
-            d = self.d_vdw_dV(T, minV, a, b)
-            sign = abs(d)/d
-            i = 0
-            while (check == 1) and (i < 1000):
-                d = self.d_vdw_dV(T, Data[i], a, b)
-                newsign = abs(d)/d
-                check = sign/newsign
-                sign = newsign
-                i += 1
-            L = Data[i-1]
-        # Right side derivative change
-            check = 1
-            d = self.d_vdw_dV(T, maxV, a, b)
-            sign = abs(d)/d
-            i = 1000
-            while (check == 1) and (i > 0):
-                d = self.d_vdw_dV(T, Data[i], a, b)
-                newsign = abs(d)/d
-                check = sign/newsign
-                sign = newsign
-                i += -1
-            R = Data[i+1]
-            
-            return [L, R]
-
-
-    def roots(self,T, Vdata, Psatguess, a , b):
-        minV = min(Vdata)
-        maxV = max(Vdata)
-
-        check = 1
-        d = self.vdw(T, minV, a, b) - Psatguess
-        sign = abs(d)/d
-        i = 0
-        while (check == 1) and (i < 1000):
-            d = self.vdw(T, Vdata[i], a, b) - Psatguess
-            newsign = abs(d)/d
-            check = sign/newsign
-            sign = newsign
-            i += 1
-        i1 = i-1
-        R1 = Vdata[i1]
-
-        check = 1
-        d = self.vdw(T, Vdata[i], a, b) - Psatguess
-        sign = abs(d)/d
-        while (check == 1) and (i < 1000):
-            d = self.vdw(T, Vdata[i], a, b) - Psatguess
-            newsign = abs(d)/d
-            check = sign/newsign
-            sign = newsign
-            i += 1
-        i2 = i-1
-        R2 = Vdata[i2]
-
-        check = 1
-        d = self.vdw(T, Vdata[i], a, b) - Psatguess
-        sign = abs(d)/d
-        while (check == 1) and (i <= 1000):
-            d = self.vdw(T, Vdata[i], a, b) - Psatguess
-            newsign = abs(d)/d
-            check = sign/newsign
-            sign = newsign
-            i += 1
-        i3 = i-1
-        R3 = Vdata[i3]
-        
-        return [R1, R2, R3, i1, i2, i3]
-        
-    def integral(self, T, iMarkers, Vdata, Psatguess, a, b):
-        LHarea = 0
-        for inter in range(iMarkers[0], iMarkers[1]-2,2):
-            LHarea += (Vdata[inter+2]-Vdata[inter]/2)*((self.vdw(T, float(Vdata[inter]), a, b) - Psatguess) + 4*(self.vdw(T, float(Vdata[inter+1]), a, b) - Psatguess) + (self.vdw(T, float(Vdata[inter+2]), a, b) - Psatguess))   
-        RHarea = 0
-        for inter in range(iMarkers[1], iMarkers[2]-2,2):
-            RHarea += (Vdata[inter+2]-Vdata[inter]/2)*((self.vdw(T, float(Vdata[inter]), a, b) - Psatguess) + 4*(self.vdw(T, float(Vdata[inter+1]), a, b) - Psatguess) + (self.vdw(T, float(Vdata[inter+2]), a, b) - Psatguess))  
-        return abs(LHarea)-abs(RHarea)
 
 if __name__ == '__main__':
 
