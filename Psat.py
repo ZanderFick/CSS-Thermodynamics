@@ -59,5 +59,3 @@ def a(T, Tc, ac, m):
     exponent = m*(1-Tr)
     a = ac*(numpy.e)**exponent
     return a
-
-print Psat(429, 508.1, 47.02, 0.978)
