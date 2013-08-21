@@ -11,27 +11,18 @@ def  Psat(T, Tc, Pcbar, m):
     Vc = (8./9)*ac/(R*Tc) 
 
     aP = a(T, Tc, ac, m)
-#derivative
-    def Vdw_der(V):
-        return d_vdw(T, aP, b, V)   
-#initial guess
-    V_extremes_i = sc_o.fsolve(Vdw_der,[0.1*R*T/Pc+0.1, R*T/Pc +1])  
-    Psat_guess_i = vdw(T, aP, b, V_extremes_i[1], 0)
-
-    def Vdw_eq(V):        
-        return vdw(T, aP, b, V, Psat_guess_i) 
 
 #Find real Psat
     def goal_func(Pguess):
         def Vdw_eq_goal(V):
            return vdw(T, aP, b, V, Pguess)
-        V_extremes = sc_o.fsolve(Vdw_eq_goal,[0.1*R*T+0.1, R*T +1])  
+# Find the V roots numerically: Volume Initial guess equations from the literature
+        V_extremes = sc_o.fsolve(Vdw_eq_goal,[0.001*R*T/Pc, R*T/Pc])  
         V_l = V_extremes[0]
         V_v = V_extremes[1]
-        print Pguess
         return P_opt(V_v, V_l, T, Pguess, aP,  b)
 
-    ao = sc_o.minimize(goal_func,[Psat_guess_i])
+    return sc_o.fmin_powell(goal_func,[0])
 
 # Van der Waals EOS
 def vdw(T, a, b, V, Pguess):
