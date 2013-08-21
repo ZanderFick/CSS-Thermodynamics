@@ -33,7 +33,10 @@ def  Psat(T, Tc, Pcbar, m):
         return P_opt(V_v, V_l, T, Pguess, aP, b)
 
     result = sc_o.fsolve(goal_func,Psat_guess_i)
-    return result/100
+    if T > Tc:
+        return 'Temperature above critical point'
+    else:
+        return result/100
 
 # Van der Waals EOS
 def vdw(T, a, b, V, Pguess):
