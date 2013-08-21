@@ -5,38 +5,41 @@ R = 8.314472
 
 def  Psat(T, Tc, Pcbar, m):
     Pc = Pcbar*100
-
-    ac = (27*R*R*Tc*Tc)/(64*Pc)
     b = (R*Tc)/(8*Pc)
-    Vc = (8./9)*ac/(R*Tc) 
 
-    aP = a(T, Tc, ac, m)
+    aP = a(T, Tc, Pc, m)
 #derivative
     def Vdw_der(V):
         return d_vdw(T, aP, b, V)   
 
-#initial guess
-# Find the V roots numerically: Volume Initial guess equations from the literature
-    V_extremes_i = numpy.real(d_vdw_roots(T, aP, b))
-    Psat_guess_i = vdw(T, aP, b, max(V_extremes_i), 0)/2
-
-#Find real Psat
-    def goal_func(Pguess):
-        def Vdw_eq_goal(V):
-           return vdw(T, aP, b, V, Pguess)
-
-        V_roots = vdw_roots(T, aP, b, Pguess)
-        V_roots =  V_roots[V_roots >=0]
-        V_roots = numpy.real(V_roots[numpy.isreal(V_roots)])
-        V_l = min(V_roots)
-        V_v = max(V_roots)
-        return P_opt(V_v, V_l, T, Pguess, aP, b)
-
-    result = sc_o.fsolve(goal_func,Psat_guess_i)
     if T > Tc:
         return 'Temperature above critical point'
     else:
-        return result/100
+#initial guess
+# Find the V roots numerically: Volume Initial guess equations from the literature
+        V_extremes_i = numpy.real(d_vdw_roots(T, aP, b))
+        Pressures = vdw(T, aP, b, V_extremes_i, 0)
+        Psum = sum(Pressures[Pressures>min(Pressures)])/2
+        if Psum <0:
+            Psat_guess_i = 0.1
+        else:
+            Psat_guess_i = Psum
+        print Psat_guess_i
+#Find real Psat
+        def goal_func(Pguess):
+            def Vdw_eq_goal(V):
+                return vdw(T, aP, b, V, Pguess)
+
+            V_roots = vdw_roots(T, aP, b, Pguess)
+            V_roots =  V_roots[V_roots >=0]
+            V_roots = numpy.real(V_roots[numpy.isreal(V_roots)])
+            
+            V_l = min(V_roots)
+            V_v = max(V_roots)
+            return P_opt(V_v, V_l, T, Pguess, aP, b)
+
+        result = sc_o.fsolve(goal_func,Psat_guess_i)
+        return [result/100, Psat_guess_i]
 
 # Van der Waals EOS
 def vdw(T, a, b, V, Pguess):
@@ -67,7 +70,8 @@ def P_opt(Vv, Vl, T, Psat, a, b):
     return R*T*numpy.log((Vv-b)/(Vl-b)) + Psat*(Vl - Vv) + a*((1/Vv)-(1/Vl))
 
 # a parameter function
-def a(T, Tc, ac, m):
+def a(T, Tc, Pc, m):
+    ac = (27*R*R*Tc*Tc)/(64*Pc)
     Tr = T/Tc
     exponent = m*(1-Tr)
     a = ac*(numpy.e)**exponent

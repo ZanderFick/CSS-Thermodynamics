@@ -3,7 +3,6 @@ from wx.lib.plot import PlotCanvas, PlotGraphics, PolyMarker, PolyLine
 import numpy as np
 import Psat
 
-
 class Psat_finder(wx.Frame):
 
     def __init__(self, parent, title):
@@ -93,25 +92,23 @@ class Psat_finder(wx.Frame):
 #Bind Events
 
         self.Button_calc_and_plot.Bind(wx.EVT_BUTTON, self.calculate_and_plot)
-        self.T_slider.Bind(wx.EVT_SLIDER, self.setlabel)
-        self.T_slider.Bind(wx.EVT_SCROLL_CHANGED, self.calculate_and_plot)
+        self.T_slider.Bind(wx.EVT_SLIDER, self.calculate_and_plot)
         
 #Initialise Window
         self.Centre()
         self.Show()
-
-    def setlabel(self, sevent):
-        self.T_slider_label.SetLabel('Isotherm Temperature = ' + str(self.T_slider.GetValue()) + ' K')
+        
 
     def calculate_and_plot(self, event):
-        R = 8.314472
+        print ''
+        print 'go'
+        print ''
+        self.T_slider_label.SetLabel('Isotherm Temperature = ' + str(self.T_slider.GetValue()) + ' K')
         Tc = 0
         Pc = 0
-        m = 0  
+        m = 0
         T = float(self.T_slider.GetValue())
-        T_Text = str(self.T_slider.GetValue())
-
-        
+        T_Text = str(self.T_slider.GetValue())       
 
         Tc_text = self.Tc_input.GetValue()
         Pc_text = self.Pc_input.GetValue()
@@ -124,117 +121,40 @@ class Psat_finder(wx.Frame):
 
 # Bereken aCrit
         if (Tc != 0) and (Pc != 0) and (m != 0):
+            R = Psat.R
             ac = (27*R*R*Tc*Tc)/(64*Pc)
             b = (R*Tc)/(8*Pc)
+            
+            calc = Psat.Psat(T, Tc, Pc/100, m)
+            Psatval = calc[0]
+            Pguesss = calc[1]
 
             self.ac_label = str(round(ac,4))
             self.b_label = str(round(b,4))
+            if np.isreal(Psatval):
+                self.Psat_label = str(round(Psatval,4))
+            else:
+                self.Psat_label = Psatval
 
             self.ac_val.SetLabel('ac = ' + self.ac_label)
             self.b_val.SetLabel('b = ' + self.b_label)
             self.m_val.SetLabel('m = ' + m_text)
+            self.P_sat.SetLabel('Psat = '+ self.Psat_label)
 
 #Calculate datapoints for vdw EOS 
-            a = self.a(ac, m, T, Tc)
-            
             Data = np.zeros((1001))
+            Line_Data = np.zeros((1001))
             
             for k in range(0,1001):
                 Data[k] = 100000*((0.1**(10-0.01*k))) + b+0.01
-            Line_Data = self.vdw(T, Data, a, b)/(100)
+                Value = max([min([Psat.vdw(T,Psat.a(T, Tc, Pc, m),b , Data[k],0)/100, 100]), -1000])
+                Line_Data[k] = Value
             Plot_Data1 = np.vstack((Data, Line_Data)).T
             
-            Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='blue')     
-
             
-            if T < Tc:
-                maxminV = self.maxmin(Data, T, Tc, a, b) 
-                Lmin = self.vdw(T, float(maxminV[0]), a, b)/(100)
-                Rmax = self.vdw(T, float(maxminV[1]), a, b)/(100)
-                
-                Psatguess = Rmax
-                
-                guessrange = abs(Lmin - Rmax)
-
-                GuessV = self.roots(T, Data, Psatguess, a, b)
-                vmarkers = GuessV[3:]  
-
-                gueserror =  self.integral(T, vmarkers, Data, Psatguess, a, b)
-                iterations = 0
-                sign = abs(gueserror)/gueserror
-                check = 1
-                while (abs(gueserror) > 0.1) and (iterations <= 1000) and (check == 1):                
-                    if gueserror > 10000000:
-                        Psatguess += -0.01*guessrange
-                    elif gueserror > 1000000 and gueserror <= 10000000 :
-                        Psatguess += -0.001*guessrange
-                    elif gueserror > 100000 and gueserror <= 1000000 :
-                        Psatguess += -0.0001*guessrange
-                    elif gueserror > 10000 and gueserror <= 100000 :
-                        Psatguess += -0.000001*guessrange
-                    elif gueserror > 1000 and gueserror <= 10000 :
-                        Psatguess += -0.0000001*guessrange
-                    elif gueserror > 100 and gueserror <= 1000 :
-                        Psatguess += -0.00000001*guessrange
-                    elif gueserror > 10 and gueserror <= 100 :
-                        Psatguess += -0.000000001*guessrange
-                    elif gueserror > 1 and gueserror <= 10 :
-                        Psatguess += -0.0000000001*guessrange
-                    elif gueserror > 0 and gueserror <= 1 :
-                        Psatguess += -0.00000000001*guessrange
-                    elif gueserror < -100000000:
-                        Psatguess += 0.01*guessrange
-                    elif gueserror <= -1000000 and gueserror >= - 100000000:
-                        Psatguess += 0.001*guessrange
-                    elif gueserror <= -100000 and gueserror >= - 10000000:
-                        Psatguess += 0.0001*guessrange
-                    elif gueserror <= -10000 and gueserror >= - 100000:
-                        Psatguess += 0.000001*guessrange
-                    elif gueserror <= -1000 and gueserror >= - 10000:
-                        Psatguess += 0.0000001*guessrange
-                    elif gueserror <= -100 and gueserror >= - 1000:
-                        Psatguess += 0.00000001*guessrange
-                    elif gueserror <= -10 and gueserror >= - 100:
-                        Psatguess += 0.000000001*guessrange
-                    elif gueserror <= -1 and gueserror >= - 10:
-                        Psatguess += 0.000000001*guessrange
-                    elif gueserror <= -0 and gueserror >= - 1:
-                        Psatguess += 0.0000000000001*guessrange
-
-
-                    GuessV = self.roots(T, Data, Psatguess, a, b)
-                    vmarkers = GuessV[3:]  
-                    
-                    newgueserror = self.integral(T, vmarkers, Data, Psatguess, a, b)
-                    if newgueserror !=0:
-                        newsign = abs(newgueserror)/newgueserror
-                        check =  newsign/sign    
-                        sign = newsign
-                        gueserror = newgueserror
-                    else:
-                        check = 0
-                    
-                    
-                    iterations += 1
-                    Psat = Psatguess
-                    self.P_sat.SetLabel(" Psat = " + str(round(Psat,6))+' Bar')    
-                   
-                                
-                Marker1 = self.vdw(T, float(GuessV[0]), a, b)/(100)
-                Marker2 = self.vdw(T, float(GuessV[1]), a, b)/(100)
-                Marker3 = self.vdw(T, float(GuessV[2]), a, b)/(100)  
-                
-                Markers = np.hstack((Marker1, Marker2, Marker3))
-                
-                Markerdata = np.vstack((GuessV[:3], Markers)).T
-                
-                Markerplot = PolyMarker(Markerdata, colour= 'green')
-
-                
-                
-                self.canvas.Draw(PlotGraphics([Isotherm, Markerplot], '', ' V', 'P'))
-            else:
-                self.canvas.Draw(PlotGraphics([Isotherm], '', ' V', 'P'))    
+            Isotherm = PolyLine(Plot_Data1, legend= 'Isotherm, T = ' + T_Text, colour='blue')  
+            
+            self.canvas.Draw(PlotGraphics([Isotherm], '', ' V', 'P'))
             self.canvas.setLogScale((True, False))
 
 
