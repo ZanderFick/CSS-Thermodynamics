@@ -18,8 +18,7 @@ def  Psat(T, Tc, Pcbar, m):
 #initial guess
 # Find the V roots numerically: Volume Initial guess equations from the literature
     V_extremes_i = numpy.real(d_vdw_roots(T, aP, b))
-    V_extremes_i = V_extremes_i[V_extremes_i>b]
-    Psat_guess_i = vdw(T, aP, b, V_extremes_i[0], 0)/2
+    Psat_guess_i = vdw(T, aP, b, max(V_extremes_i), 0)/2
 
 #Find real Psat
     def goal_func(Pguess):
