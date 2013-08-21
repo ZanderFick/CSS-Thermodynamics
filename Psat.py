@@ -32,7 +32,6 @@ def  Psat(T, Tc, Pcbar, m):
         V_roots = numpy.real(V_roots[numpy.isreal(V_roots)])
         V_l = min(V_roots)
         V_v = max(V_roots)
-        print Pguess
         return P_opt(V_v, V_l, T, Pguess, aP, b)
 
     result = sc_o.fsolve(goal_func,Psat_guess_i)
@@ -72,5 +71,3 @@ def a(T, Tc, ac, m):
     exponent = m*(1-Tr)
     a = ac*(numpy.e)**exponent
     return a
-
-print Psat(429, 508.1, 47.02, 0.978)
