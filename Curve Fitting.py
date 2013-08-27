@@ -4,7 +4,7 @@ import numpy
 from lmfit import minimize, Parameters
 import Psat
 
-R = numpy.float64(8.314472)
+R = 8.314472
 
 def residual(Tc, Pc, Tb, Data):
     import_data()
