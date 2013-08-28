@@ -44,8 +44,7 @@ def  Psat(T, Tc, Pcbar, m):
         V_roots =  V_roots[V_roots >0]
         V_roots = numpy.real(V_roots[numpy.isreal(V_roots)])
         V_l_ret = min(V_roots)
-        V_v_ret = max(V_roots)  
-        print [result/100, V_l_ret, V_v_ret]
+        V_v_ret = max(V_roots)
         
         return [result/100, V_l_ret, V_v_ret]
 
