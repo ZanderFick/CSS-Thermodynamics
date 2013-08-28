@@ -5,7 +5,7 @@ import Psat
 R = 8.314472
 
 
-def G_RT_main(T, P_bar, x1,Tc_1, Pc_1_bar, Tc_2, Pc_2_bar, m_1, m_2):
+def G_RT_main(T, P_bar, x1,Tc_1, Pc_1_bar, m_1, Tc_2, Pc_2_bar, m_2):
     Pc_1 = Pc_1_bar*100
     Pc_2 = Pc_2_bar*100
     P = P_bar*100    
@@ -20,6 +20,7 @@ def G_RT_main(T, P_bar, x1,Tc_1, Pc_1_bar, Tc_2, Pc_2_bar, m_1, m_2):
     amix = a_mix(a_1, a_2, x1)
     bmix = b_mix(b_1, b_2, x1)
     
+    
     volumes = dV(T, P_bar, x1, Tc_1, Pc_1_bar, Tc_2, Pc_2_bar, m_1, m_2)
    
     delta_V = volumes[0]
@@ -31,7 +32,6 @@ def G_RT_main(T, P_bar, x1,Tc_1, Pc_1_bar, Tc_2, Pc_2_bar, m_1, m_2):
     term_2_1 = numpy.log((V_i[0]-b_1)/(Vmix-bmix))
     term_2_2 = numpy.log((V_i[1]-b_2)/(Vmix-bmix))
     term_2 = x1*term_2_1 + x2*term_2_2
-    print V_i
     term_3_1 = a_1/(R*T*V_i[0])
     term_3_2 = a_2/(R*T*V_i[1])
     
@@ -62,13 +62,11 @@ def V_single(T, Tc, P_bar, Pc_bar, m):
     calc = Psat.Psat(T, Tc, Pc_bar, m)
     sat_P = calc[0]*100
 
-
     a_eq = Psat.a(T, Tc, Pc, m)
     b = (R*Tc)/(8*Pc)
 
     def eq(V):
         return abs(Psat.vdw(T, a_eq, b, V, 0) - P)
-    
     if P > sat_P:
         V_id_l = sc_o.fsolve(eq, [0.99*calc[1]])
         return [V_id_l]
@@ -97,8 +95,8 @@ def b_mix(b1, b2, x1):
 
 import pylab
 Data_x = numpy.linspace(0,1)
-Data_y_1 = G_RT_main(500, 30, Data_x, 508.1, 47.02, 647.3, 220.64, 0.967, 1.014)
-Data_y_2=  G_RT_main(450, 30, Data_x, 508.1, 47.02, 647.3, 220.64, 0.967, 1.014)
+Data_y_1 = G_RT_main(500, 20, Data_x, 508.1, 47.02, 0.967, 647.3, 220.64, 1.014)
+Data_y_2=  G_RT_main(300, 20, Data_x, 508.1, 47.02, 0.967, 647.3, 220.64, 1.014)
 pylab.plot(Data_x, Data_y_1, 'r')
 pylab.plot(Data_x, Data_y_2, 'b')
 pylab.show()
