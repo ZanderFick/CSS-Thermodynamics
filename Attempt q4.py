@@ -100,9 +100,6 @@ class Psat_finder(wx.Frame):
         
 
     def calculate_and_plot(self, event):
-        print ''
-        print 'go'
-        print ''
         self.T_slider_label.SetLabel('Isotherm Temperature = ' + str(self.T_slider.GetValue()) + ' K')
         Tc = 0
         Pc = 0
@@ -127,7 +124,6 @@ class Psat_finder(wx.Frame):
             
             calc = Psat.Psat(T, Tc, Pc/100, m)
             Psatval = calc[0]
-            Pguesss = calc[1]
 
             self.ac_label = str(round(ac,4))
             self.b_label = str(round(b,4))
@@ -148,7 +144,12 @@ class Psat_finder(wx.Frame):
             for k in range(0,1001):
                 Data[k] = 100000*((0.1**(10-0.01*k))) + b+0.01
                 Value = max([min([Psat.vdw(T,Psat.a(T, Tc, Pc, m),b , Data[k],0)/100, 100]), -1000])
-                Line_Data[k] = Value
+                V_l = calc[1]
+                V_v = calc[2]
+                if Data[k] < V_l or Data[k] > V_v:
+                    Line_Data[k] = Value
+                else:
+                    Line_Data[k] = Psatval
             Plot_Data1 = np.vstack((Data, Line_Data)).T
             
             

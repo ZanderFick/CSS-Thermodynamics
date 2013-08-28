@@ -20,26 +20,34 @@ def  Psat(T, Tc, Pcbar, m):
         V_extremes_i = numpy.real(d_vdw_roots(T, aP, b))
         Pressures = vdw(T, aP, b, V_extremes_i, 0)
         Psum = sum(Pressures[Pressures>min(Pressures)])/2
+
         if Psum <0:
             Psat_guess_i = 0.1
         else:
             Psat_guess_i = Psum
-        print Psat_guess_i
 #Find real Psat
         def goal_func(Pguess):
             def Vdw_eq_goal(V):
                 return vdw(T, aP, b, V, Pguess)
 
             V_roots = vdw_roots(T, aP, b, Pguess)
-            V_roots =  V_roots[V_roots >=0]
+            V_roots =  V_roots[V_roots >0]
             V_roots = numpy.real(V_roots[numpy.isreal(V_roots)])
-            
             V_l = min(V_roots)
             V_v = max(V_roots)
+           
             return P_opt(V_v, V_l, T, Pguess, aP, b)
 
         result = sc_o.fsolve(goal_func,Psat_guess_i)
-        return [result/100, Psat_guess_i]
+        
+        V_roots = vdw_roots(T, aP, b, result)
+        V_roots =  V_roots[V_roots >0]
+        V_roots = numpy.real(V_roots[numpy.isreal(V_roots)])
+        V_l_ret = min(V_roots)
+        V_v_ret = max(V_roots)  
+        print [result/100, V_l_ret, V_v_ret]
+        
+        return [result/100, V_l_ret, V_v_ret]
 
 # Van der Waals EOS
 def vdw(T, a, b, V, Pguess):
