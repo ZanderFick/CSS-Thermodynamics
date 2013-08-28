@@ -11,8 +11,8 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
 
     x2 = 1- x1
 
-    b1 = (R*Tc_1)/(8*Pc_2)
-    b2 = (R*Tc_1)/(8*Pc_2)
+    b1 = (R*Tc_1)/(8*Pc_1)
+    b2 = (R*Tc_2)/(8*Pc_2)
     
     bmix = b_mix(x1, x2, b1, b2)
     
@@ -27,6 +27,7 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
 #Liquid phase:
     V_l_1 = Volumes_1[0]
     V_l_2 = Volumes_2[0]
+    print bmix
     
     if V_l_1 != 0 and V_l_2 != 0:
     
@@ -66,6 +67,7 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
         term_3_v = x1*term_3_v_a + x2*term_3_v_b
         
         term_4_v = amix/(R*T*Vmix_v)
+        
     
         dG_v = term_1_v + term_2_v + term_3_v - term_4_v
         return dG_v
