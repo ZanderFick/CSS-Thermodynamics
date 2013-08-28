@@ -57,7 +57,6 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
     
         term_1_v = P*deltaV_v/(R*T)
-
         term_2_v_a = numpy.log((V_v_1 - b1)/(Vmix_v - bmix))
         term_2_v_b = numpy.log((V_v_2 - b2)/(Vmix_v - bmix))
         term_2_v = x1*term_2_v_a + x2*term_2_v_b
@@ -82,7 +81,6 @@ def Volume_solve(T, P_bar, Pc_bar, Tc, m):
     P_sat_bar = calc[0]
     
     P_sat = P_sat_bar*100
-
     a_eq = Psat.a(T, Tc, Pc, m)
     b_eq = (R*Tc)/(8*Pc)
 
@@ -100,7 +98,7 @@ def Volume_solve(T, P_bar, Pc_bar, Tc, m):
         return[calc[1], calc[2]]
 
 def V_mix(x1, x2, V1, V2):
-    return x1*V1 + x2*V2
+    return V1*x1 + x2*V2
 
 def delta_V(x1, x2, V1, V2):
     term_2_a = x1*V1
@@ -119,6 +117,6 @@ import pylab
 Data_x = numpy.linspace(0,1)
 Data_y = numpy.zeros(Data_x.size)
 for k in range(Data_x.size):
-    Data_y[k] = dG_RT(300, 3, Data_x[k], 508.1, 47.02, 0.967, 647.3, 220.64, 1.014)
+    Data_y[k] = dG_RT(450, 15, Data_x[k], 507.9, 30.35, 0.969, 647.3, 220.64, 1.014)
 pylab.plot(Data_x, Data_y, 'r')
 pylab.show()
