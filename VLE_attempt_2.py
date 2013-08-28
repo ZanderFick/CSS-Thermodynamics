@@ -46,7 +46,6 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
         term_4_l = amix/(R*T*Vmix_l)
     
         dG_l = term_1_l + term_2_l + term_3_l - term_4_l
-        dG_v = term_1_v + term_2_v + term_3_v - term_4_v
         return dG_l
 #Vapour Phase:
     V_v_1 = Volumes_1[1]
@@ -120,6 +119,6 @@ import pylab
 Data_x = numpy.linspace(0,1)
 Data_y = numpy.zeros(Data_x.size)
 for k in range(Data_x.size):
-    Data_y[k] = dG_RT(500, 3, Data_x[k], 508.1, 47.02, 0.967, 647.3, 220.64, 1.014)
+    Data_y[k] = dG_RT(300, 3, Data_x[k], 508.1, 47.02, 0.967, 647.3, 220.64, 1.014)
 pylab.plot(Data_x, Data_y, 'r')
 pylab.show()
