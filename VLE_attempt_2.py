@@ -27,11 +27,15 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
 #Liquid phase:
     V_l_1 = Volumes_1[0]
     V_l_2 = Volumes_2[0]
-    print bmix
+    
+    if x1 != 0 and x1 != 1:
+        Gi = (x1*numpy.log(x1) + x2*numpy.log(x2))
+    else:
+        Gi = 0
     
     if V_l_1 != 0 and V_l_2 != 0:
     
-        Vmix_l = V_mix(x1, x2, V_l_1, V_l_2)
+        Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
         deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)
     
         term_1_l = P*deltaV_l/(R*T)
@@ -47,14 +51,14 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
         term_4_l = amix/(R*T*Vmix_l)
     
         dG_l = term_1_l + term_2_l + term_3_l - term_4_l
-        return dG_l
+        return dG_l+ Gi
 #Vapour Phase:
     V_v_1 = Volumes_1[1]
     V_v_2 = Volumes_2[1]
 
     if V_v_1 != 0 and V_v_2 != 0:
     
-        Vmix_v = V_mix(x1, x2, V_v_1, V_v_2)
+        Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
     
         term_1_v = P*deltaV_v/(R*T)
@@ -70,7 +74,7 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
         
     
         dG_v = term_1_v + term_2_v + term_3_v - term_4_v
-        return dG_v
+        return  dG_v+ Gi
 
     
 
@@ -99,14 +103,14 @@ def Volume_solve(T, P_bar, Pc_bar, Tc, m):
     else:
         return[calc[1], calc[2]]
 
-def V_mix(x1, x2, V1, V2):
-    return V1*x1 + x2*V2
+def lin_mix(x1, x2, A1, A2):
+    return A1*x1 + x2*A2
 
 def delta_V(x1, x2, V1, V2):
     term_2_a = x1*V1
     term_2_b = x2*V2
     
-    return V_mix(x1, x2, V1, V2) -(term_2_a + term_2_b)
+    return lin_mix(x1, x2, V1, V2) -(term_2_a + term_2_b)
 
 def b_mix(x1, x2, b1, b2):
     return b1*x1 + b2*x2
@@ -117,8 +121,13 @@ def a_mix(x1, x2, a11, a22):
         
 import pylab
 Data_x = numpy.linspace(0,1)
-Data_y = numpy.zeros(Data_x.size)
+Data_y = numpy.zeros([Data_x.size,1])
+z = numpy.zeros([Data_x.size,1])
 for k in range(Data_x.size):
-    Data_y[k] = dG_RT(450, 15, Data_x[k], 507.9, 30.35, 0.969, 647.3, 220.64, 1.014)
+                        #(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2)
+    Data_y[k] = dG_RT(60, 100, Data_x[k], 562.16, 48.98, 0.848, 507.9, 30.35, 0.969)
+diff = numpy.diff(Data_y, axis=0)
 pylab.plot(Data_x, Data_y, 'r')
+pylab.plot(Data_x[:49], diff, 'b')
+pylab.plot(Data_x,z , 'k')
 pylab.show()
