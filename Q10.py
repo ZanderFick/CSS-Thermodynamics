@@ -99,8 +99,9 @@ def b_mix(x1, x2, b1, b2):
 def a_mix(x1, x2, a11, a22, s):
     r = float(s)/float(s-1)
     a12 = numpy.sqrt(a11*a22)
-    term_generic = (((a11)*x1 + (a12)*x2)**(r/s))
-    term = x1*term_generic + x2*term_generic
+    term_1 = (((a11)*x1 + (a12)*x2)**(r/s))
+    term_2 = (((a12)*x1 + (a22)*x2)**(r/s))
+    term = x1*term_1 + x2*term_2
     return term**(1/r)
 
 def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
@@ -151,7 +152,8 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
     pylab.show()
 
     return out
+    print out
 
-tangent(60, 100, 562.16, 48.98, 0.848, 507.9, 30.35, 0.969, 5)
+tangent(50, 100, 562.16, 48.98, 0.848, 507.9, 30.35, 0.969, 5)
 
 
