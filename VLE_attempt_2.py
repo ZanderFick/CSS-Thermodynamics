@@ -1,6 +1,9 @@
 import numpy
+import scipy.misc as sc_m
 import scipy.optimize as sc_o
+from lmfit import minimize, Parameters
 import Psat
+import pylab
 
 R = 8.314472
 
@@ -36,21 +39,8 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
     if V_l_1 != 0 and V_l_2 != 0:
     
         Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
-        deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)
-    
-        term_1_l = P*deltaV_l/(R*T)
-
-        term_2_l_a = numpy.log((V_l_1 - b1)/(Vmix_l - bmix))
-        term_2_l_b = numpy.log((V_l_2 - b2)/(Vmix_l - bmix))
-        term_2_l = x1*term_2_l_a + x2*term_2_l_b
-    
-        term_3_l_a = a1/(R*T*V_l_1)
-        term_3_l_b = a2/(R*T*V_l_2)
-        term_3_l = x1*term_3_l_a + x2*term_3_l_b
-        
-        term_4_l = amix/(R*T*Vmix_l)
-    
-        dG_l = term_1_l + term_2_l + term_3_l - term_4_l
+        deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)    
+        dG_l = P*deltaV_l/(R*T) + x1*(numpy.log((V_l_1 - b1)/(Vmix_l - bmix))) + x2*(numpy.log((V_l_2 - b2)/(Vmix_l - bmix))) + x1*(a1/(R*T*V_l_1)) + x2*(a2/(R*T*V_l_2)) - amix/(R*T*Vmix_l)
         return dG_l+ Gi
 #Vapour Phase:
     V_v_1 = Volumes_1[1]
@@ -60,23 +50,13 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
     
         Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
-    
-        term_1_v = P*deltaV_v/(R*T)
-        term_2_v_a = numpy.log((V_v_1 - b1)/(Vmix_v - bmix))
-        term_2_v_b = numpy.log((V_v_2 - b2)/(Vmix_v - bmix))
-        term_2_v = x1*term_2_v_a + x2*term_2_v_b
-    
-        term_3_v_a = a1/(R*T*V_v_1)
-        term_3_v_b = a2/(R*T*V_v_2)
-        term_3_v = x1*term_3_v_a + x2*term_3_v_b
-        
-        term_4_v = amix/(R*T*Vmix_v)
-        
-    
-        dG_v = term_1_v + term_2_v + term_3_v - term_4_v
+        dG_v = P*deltaV_v/(R*T) + x1*(numpy.log((V_v_1 - b1)/(Vmix_v - bmix))) + x2*(numpy.log((V_v_2 - b2)/(Vmix_v - bmix))) + x1*(a1/(R*T*V_v_1)) + x2*(a2/(R*T*V_v_2)) - amix/(R*T*Vmix_v)
         return  dG_v+ Gi
 
-    
+def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
+    def diff_func(x):
+        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2)
+    return sc_m.derivative(diff_func, x1, dx=1e-5) 
 
 def Volume_solve(T, P_bar, Pc_bar, Tc, m):
     Pc = Pc_bar*100
@@ -118,16 +98,56 @@ def b_mix(x1, x2, b1, b2):
 def a_mix(x1, x2, a11, a22):
     a12 = numpy.sqrt(a11*a22)
     return a11*(x1**2) + 2*a12*x1*x2 + a22*(x2**2)
+
+def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
+    def Gmix(x):
+        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2)
+    def d_Gmix(x):
+        return deriv_dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2)
+
+    min_root = sc_o.fsolve(d_Gmix, 0.01)
+    max_root = sc_o.fsolve(d_Gmix, 0.98)
+    bnds = ((0.001, max_root[0]*0.8),(min_root[0]*1.1, 0.999))
+    init = [min_root[0]*1.1, 0.999]
+
+    
+    def resid(x_vect):
+        xa = x_vect[0]
+        xb = x_vect[1]
+        m1 = d_Gmix(xa)
+        m2 = d_Gmix(xb)
+
+        c1 = Gmix(xa) - xa*m1
+        c2 = Gmix(xb) - xb*m2
+        e1 = m1 + c1
+        e2 = m2 + c2
+        error = max([abs(e1-e2),abs(c1-c2)])
+        return error
+
+    out = sc_o.fmin(resid,init)
+    xa = out[0]
+    xb = out[1]
+    
+    def y1(x):
+        return d_Gmix(xa)*x + Gmix(xa) - xa*d_Gmix(xa)
+    def y2(x):
+        return d_Gmix(xb)*x + Gmix(xb) - xb*d_Gmix(xb)
+    testrange = numpy.linspace(0,1)
+    Data_y = numpy.zeros([testrange.size,1])
+    Data_y_1 = numpy.zeros([testrange.size,1])
+    Data_y_2 = numpy.zeros([testrange.size,1])
+    for k in range(testrange.size):
+        Data_y[k] = Gmix(testrange[k])
+        Data_y_1[k] = y1(testrange[k])
+        Data_y_2[k] = y2(testrange[k])
         
-import pylab
-Data_x = numpy.linspace(0,1)
-Data_y = numpy.zeros([Data_x.size,1])
-z = numpy.zeros([Data_x.size,1])
-for k in range(Data_x.size):
-                        #(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2)
-    Data_y[k] = dG_RT(60, 100, Data_x[k], 562.16, 48.98, 0.848, 507.9, 30.35, 0.969)
-diff = numpy.diff(Data_y, axis=0)
-pylab.plot(Data_x, Data_y, 'r')
-pylab.plot(Data_x[:49], diff, 'b')
-pylab.plot(Data_x,z , 'k')
-pylab.show()
+    pylab.plot(testrange, Data_y, 'r')
+    pylab.plot(testrange, Data_y_1, 'b')
+    pylab.plot(testrange, Data_y_2, 'g')
+    pylab.show()
+
+    return out
+
+tangent(60, 100, 562.16, 48.98, 0.848, 507.9, 30.35, 0.969)
+
+

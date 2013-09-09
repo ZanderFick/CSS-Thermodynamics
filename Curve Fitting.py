@@ -7,7 +7,6 @@ import Psat
 R = 8.314472
 
 def residual(Tc, Pc, Tb, Data):
-    import_data()
     Data_x = Data[:,0]
     Data_y = Data[:,1]
     
