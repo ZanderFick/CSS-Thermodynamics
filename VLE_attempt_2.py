@@ -41,6 +41,8 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
         Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
         deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)
         dG_l = P*deltaV_l/(R*T) + x1*(numpy.log((V_l_1 - b1)/(Vmix_l - bmix))) + x2*(numpy.log((V_l_2 - b2)/(Vmix_l - bmix))) + x1*(a1/(R*T*V_l_1)) + x2*(a2/(R*T*V_l_2)) - amix/(R*T*Vmix_l)
+    else:
+        dG_l = 0
 #Vapour Phase:
     V_v_1 = Volumes_1[1]
     V_v_2 = Volumes_2[1]
@@ -50,6 +52,8 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
         Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
         dG_v = P*deltaV_v/(R*T) + x1*(numpy.log((V_v_1 - b1)/(Vmix_v - bmix))) + x2*(numpy.log((V_v_2 - b2)/(Vmix_v - bmix))) + x1*(a1/(R*T*V_v_1)) + x2*(a2/(R*T*V_v_2)) - amix/(R*T*Vmix_v)
+    else:
+        dG_v = 0
     return dG_l+ dG_v+ Gi
 
 def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
@@ -62,7 +66,6 @@ def Volume_solve(T, P_bar, Pc_bar, Tc, m):
     P = P_bar*100
 
     calc = Psat.Psat(T, Tc, Pc_bar, m)
-
     P_sat_bar = calc[0]
 
     P_sat = P_sat_bar*100
@@ -96,10 +99,9 @@ def b_mix(x1, x2, b1, b2):
 
 def a_mix(x1, x2, a11, a22):
     a12 = numpy.sqrt(a11*a22)
-    print a11*(x1**2) + 2*a12*x1*x2 + a22*(x2**2)
     return a11*(x1**2) + 2*a12*x1*x2 + a22*(x2**2)
 
-def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, plot=False):
+def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, plot=True):
     def Gmix(x):
         return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2)
     def d_Gmix(x):
@@ -148,3 +150,4 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, plot=F
     return out
 
 
+tangent(300.15, 20, 508.1, 47.02, 0.9774, 647.3, 220.64, 1.008, -151.30, -228.59)
