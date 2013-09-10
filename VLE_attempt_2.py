@@ -112,19 +112,17 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2):
 
     
     def resid(x_vect):
-        xa = x_vect[0]
-        xb = x_vect[1]
+        xa, xb = x_vect
+
         m1 = d_Gmix(xa)
         m2 = d_Gmix(xb)
 
-        c1 = Gmix(xa) - xa*m1
-        c2 = Gmix(xb) - xb*m2
-        e1 = m1 + c1
-        e2 = m2 + c2
-        error = max([abs(e1-e2),abs(c1-c2)])
-        return error
+        lineslope = (Gmix(xa) - Gmix(xb))/(xa - xb)
 
-    out = sc_o.fmin(resid,init)
+        return [m1 - m2,
+                m2 - lineslope]
+
+    out = sc_o.fsolve(resid,init)
     xa = out[0]
     xb = out[1]
     
