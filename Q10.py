@@ -7,7 +7,7 @@ import pylab
 
 R = 8.314472
 
-def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
+def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s, Go1, Go2):
     Pc_1 = Pc_bar_1*100
     Pc_2 = Pc_bar_2*100
     P = P_bar*100
@@ -54,9 +54,9 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
         dG_v = P*deltaV_v/(R*T) + x1*(numpy.log((V_v_1 - b1)/(Vmix_v - bmix))) + x2*(numpy.log((V_v_2 - b2)/(Vmix_v - bmix))) + x1*(a1/(R*T*V_v_1)) + x2*(a2/(R*T*V_v_2)) - amix/(R*T*Vmix_v)
         return  dG_v+ Gi
 
-def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
+def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s, Go1, Go2):
     def diff_func(x):
-        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s)
+        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s, Go1, Go2)
     return sc_m.derivative(diff_func, x1, dx=1e-5) 
 
 def Volume_solve(T, P_bar, Pc_bar, Tc, m):
@@ -104,11 +104,11 @@ def a_mix(x1, x2, a11, a22, s):
     term = x1*term_1 + x2*term_2
     return term**(1/r)
 
-def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
+def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s, Go1, Go2):
     def Gmix(x):
-        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s)
+        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s, Go1, Go2)
     def d_Gmix(x):
-        return deriv_dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s)
+        return deriv_dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s, Go1, Go2)
 
     min_root = sc_o.fsolve(d_Gmix, 0.01)
     max_root = sc_o.fsolve(d_Gmix, 0.98)
@@ -133,27 +133,16 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
     xa = out[0]
     xb = out[1]
     
-    def y1(x):
-        return d_Gmix(xa)*x + Gmix(xa) - xa*d_Gmix(xa)
-    def y2(x):
-        return d_Gmix(xb)*x + Gmix(xb) - xb*d_Gmix(xb)
-    testrange = numpy.linspace(0,1)
-    Data_y = numpy.zeros([testrange.size,1])
-    Data_y_1 = numpy.zeros([testrange.size,1])
-    Data_y_2 = numpy.zeros([testrange.size,1])
-    for k in range(testrange.size):
-        Data_y[k] = Gmix(testrange[k])
-        Data_y_1[k] = y1(testrange[k])
-        Data_y_2[k] = y2(testrange[k])
-        
-    pylab.plot(testrange, Data_y, 'r')
-    pylab.plot(testrange, Data_y_1, 'b')
-    pylab.plot(testrange, Data_y_2, 'g')
-    pylab.show()
+
 
     return out
     print out
+Data_x = numpy.zeros([10,1])
+Data_y = numpy.zeros([10,1])
+for P in range(1,10):
+    Data_x[P] = P+40
+    Data_y[P] = tangent(342, P+40, 508.1, 47.02, 0.9774, 647.3, 220.64, 1.008,5, -151.30, -228.59)[0]
 
-tangent(50, 100, 562.16, 48.98, 0.848, 507.9, 30.35, 0.969, 5)
 
-
+pylab.plot(Data_x,Data_y,'r')
+pylab.show
