@@ -97,6 +97,7 @@ def b_mix(x1, x2, b1, b2):
 
 def a_mix(x1, x2, a11, a22):
     a12 = numpy.sqrt(a11*a22)
+    print a11*(x1**2) + 2*a12*x1*x2 + a22*(x2**2)
     return a11*(x1**2) + 2*a12*x1*x2 + a22*(x2**2)
 
 def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
@@ -147,6 +148,6 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
 
     return out
 #(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2)
-tangent(342, 20, 508.1, 47.02, 0.9774, 647.3, 220.64, 1.008, -151.30, -228.59)
+tangent(523.15, 40, 508.1, 47.02, 0.9774, 647.3, 220.64, 1.008, -151.30, -228.59)
 
 
