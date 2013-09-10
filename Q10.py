@@ -7,11 +7,11 @@ import pylab
 
 R = 8.314472
 
-def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
+def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
     Pc_1 = Pc_bar_1*100
     Pc_2 = Pc_bar_2*100
     P = P_bar*100
-   
+
     x2 = 1- x1
 
     b1 = (R*Tc_1)/(8*Pc_1)
@@ -24,20 +24,18 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
 
     amix = a_mix(x1, x2, a1, a2, s)
 
-
     Volumes_1 = Volume_solve(T, P_bar, Pc_bar_1, Tc_1, m_1)
     Volumes_2 = Volume_solve(T, P_bar, Pc_bar_2, Tc_2, m_2)
-
 #Liquid phase:
     V_l_1 = Volumes_1[0]
     V_l_2 = Volumes_2[0]
     
     if x1 != 0 and x1 != 1:
-        Gi = (x1*numpy.log(x1) + x2*numpy.log(x2))
+        Gi = (x1*numpy.log(x1) + x2*numpy.log(x2))+(Go1*x1 + Go2*x2)/(R*T)
     else:
         Gi = 0
     
-    if V_l_1 != 0 and V_l_2 != 0:
+    if V_l_1 != 0 or V_l_2 != 0:
     
         Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
         deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)    
@@ -47,17 +45,19 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
     V_v_1 = Volumes_1[1]
     V_v_2 = Volumes_2[1]
 
-    if V_v_1 != 0 and V_v_2 != 0:
+    if V_v_1 != 0 or V_v_2 != 0:
     
         Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
         dG_v = P*deltaV_v/(R*T) + x1*(numpy.log((V_v_1 - b1)/(Vmix_v - bmix))) + x2*(numpy.log((V_v_2 - b2)/(Vmix_v - bmix))) + x1*(a1/(R*T*V_v_1)) + x2*(a2/(R*T*V_v_2)) - amix/(R*T*Vmix_v)
         return  dG_v+ Gi
 
-def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
+
+def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
     def diff_func(x):
-        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s)
-    return sc_m.derivative(diff_func, x1, dx=1e-5) 
+        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s)
+    return sc_m.derivative(diff_func, 
+                           x1, dx=1e-5) 
 
 def Volume_solve(T, P_bar, Pc_bar, Tc, m):
     Pc = Pc_bar*100
@@ -99,26 +99,25 @@ def b_mix(x1, x2, b1, b2):
 def a_mix(x1, x2, a11, a22, s):
     r = float(s)/float(s-1)
     a12 = numpy.sqrt(a11*a22)
-    term_1 = (((a11)*x1 + (a12)*x2)**(r/s))
-    term_2 = (((a12)*x1 + (a22)*x2)**(r/s))
+    term_1 = (((a11**s)*x1 + (a12**s)*x2)**(r/s))
+    term_2 = (((a12**s)*x1 + (a22**s)*x2)**(r/s))
     term = x1*term_1 + x2*term_2
     return term**(1/r)
 
-def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
+def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
     def Gmix(x):
-        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s)
+        return dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s)
     def d_Gmix(x):
-        return deriv_dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s)
-
+        return deriv_dG_RT(T, P_bar, x, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s)
     min_root = sc_o.fsolve(d_Gmix, 0.01)
     max_root = sc_o.fsolve(d_Gmix, 0.98)
     bnds = ((0.001, max_root[0]*0.8),(min_root[0]*1.1, 0.999))
-    init = [min_root[0]*1.1, 0.999]
-
+    init = [0.001, 0.999]
     
     def resid(x_vect):
         xa = x_vect[0]
         xb = x_vect[1]
+        print x_vect
         m1 = d_Gmix(xa)
         m2 = d_Gmix(xb)
 
@@ -128,32 +127,8 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, s):
         e2 = m2 + c2
         error = max([abs(e1-e2),abs(c1-c2)])
         return error
-
-    out = sc_o.fmin(resid,init)
-    xa = out[0]
-    xb = out[1]
     
-    def y1(x):
-        return d_Gmix(xa)*x + Gmix(xa) - xa*d_Gmix(xa)
-    def y2(x):
-        return d_Gmix(xb)*x + Gmix(xb) - xb*d_Gmix(xb)
-    testrange = numpy.linspace(0,1)
-    Data_y = numpy.zeros([testrange.size,1])
-    Data_y_1 = numpy.zeros([testrange.size,1])
-    Data_y_2 = numpy.zeros([testrange.size,1])
-    for k in range(testrange.size):
-        Data_y[k] = Gmix(testrange[k])
-        Data_y_1[k] = y1(testrange[k])
-        Data_y_2[k] = y2(testrange[k])
-        
-    pylab.plot(testrange, Data_y, 'r')
-    pylab.plot(testrange, Data_y_1, 'b')
-    pylab.plot(testrange, Data_y_2, 'g')
-    pylab.show()
-
+    out = sc_o.fmin(resid,init )
+    
     return out
-    print out
-
-tangent(50, 100, 562.16, 48.98, 0.848, 507.9, 30.35, 0.969, 5)
-
 
