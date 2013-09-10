@@ -40,7 +40,6 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
         Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
         deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)    
         dG_l = P*deltaV_l/(R*T) + x1*(numpy.log((V_l_1 - b1)/(Vmix_l - bmix))) + x2*(numpy.log((V_l_2 - b2)/(Vmix_l - bmix))) + x1*(a1/(R*T*V_l_1)) + x2*(a2/(R*T*V_l_2)) - amix/(R*T*Vmix_l)
-        return dG_l+ Gi
 #Vapour Phase:
     V_v_1 = Volumes_1[1]
     V_v_2 = Volumes_2[1]
@@ -50,7 +49,7 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
         Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
         dG_v = P*deltaV_v/(R*T) + x1*(numpy.log((V_v_1 - b1)/(Vmix_v - bmix))) + x2*(numpy.log((V_v_2 - b2)/(Vmix_v - bmix))) + x1*(a1/(R*T*V_v_1)) + x2*(a2/(R*T*V_v_2)) - amix/(R*T*Vmix_v)
-        return  dG_v+ Gi
+    return  dG_v+ dG_l+ Gi
 
 
 def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
