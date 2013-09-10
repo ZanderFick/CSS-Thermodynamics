@@ -125,29 +125,6 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
         return error
 
     out = sc_o.fmin(resid,init )
-    xa = out[0]
-    xb = out[1]
-    
-    def y1(x):
-        return d_Gmix(xa)*x + Gmix(xa) - xa*d_Gmix(xa)
-    def y2(x):
-        return d_Gmix(xb)*x + Gmix(xb) - xb*d_Gmix(xb)
-    testrange = numpy.linspace(0,1,100)
-    Data_y = numpy.zeros([testrange.size,1])
-    Data_y_1 = numpy.zeros([testrange.size,1])
-    Data_y_2 = numpy.zeros([testrange.size,1])
-    for k in range(testrange.size):
-        Data_y[k] = Gmix(testrange[k])
-        Data_y_1[k] = y1(testrange[k])
-        Data_y_2[k] = y2(testrange[k])
-        
-    pylab.plot(testrange, Data_y, 'r')
-    pylab.plot(testrange, Data_y_1, 'b')
-    pylab.plot(testrange, Data_y_2, 'g')
-    pylab.show()
-
     return out
-#(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2)
-tangent(523.15, 40, 508.1, 47.02, 0.9774, 647.3, 220.64, 1.008, -151.30, -228.59)
 
 

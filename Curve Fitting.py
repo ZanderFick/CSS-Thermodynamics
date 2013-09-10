@@ -39,23 +39,3 @@ def vdw_residual(params, x, data):
         calc = Psat.Psat(x[k], Tc, Pc, m)
         model_data[k] = calc[0]*100
     return (model_data-data)/abs(model_data)
-
-
-Test_data_acetone = numpy.array(   [[280.15,	5.42],
-                                    [291.07,	9.36],
-                                    [301.99,	15.43],
-                                    [312.91,	24.39],
-                                    [323.83,	37.17],
-                                    [334.27,	53.96],
-                                    [363.44,	133.47],
-                                    [395.16,	300.70],
-                                    [429.64,	628.99],
-                                    [448.00,	886.95],
-                                    [467.14,	1230.97],
-                                    [487.09,	1682.78],
-                                    [505.82,	2204.00]])
-
-
-
-
-print residual(554.0, 40.7,341.88,  Test_data_acetone)

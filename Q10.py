@@ -119,8 +119,4 @@ def tangent(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
     out = sc_o.fmin(resid,init )
     
     return out
-#(T, P_bar, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2)
-
-tangent(423.15, 6, 508.1, 47.02, 0.9774, 647.3, 220.64, 1.008, -151.30, -228.59, 4)
-
 
