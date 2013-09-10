@@ -27,18 +27,30 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):
     Volumes_1 = Volume_solve(T, P_bar, Pc_bar_1, Tc_1, m_1)
     Volumes_2 = Volume_solve(T, P_bar, Pc_bar_2, Tc_2, m_2)
 #Liquid phase:
-    V_l_1 = max(Volumes_1)
-    V_l_2 = max(Volumes_2)
+    V_l_1 = Volumes_1[0]
+    V_l_2 = Volumes_2[0]
     
     if x1 != 0 and x1 != 1:
         Gi = (x1*numpy.log(x1) + x2*numpy.log(x2))+(Go1*x1 + Go2*x2)/(R*T)
     else:
         Gi = 0
     
-    Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
-    deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)    
-    dG_l = P*deltaV_l/(R*T) + x1*(numpy.log((V_l_1 - b1)/(Vmix_l - bmix))) + x2*(numpy.log((V_l_2 - b2)/(Vmix_l - bmix))) + x1*(a1/(R*T*V_l_1)) + x2*(a2/(R*T*V_l_2)) - amix/(R*T*Vmix_l)
-    return dG_l+ Gi
+    if V_l_1 != 0 or V_l_2 != 0:
+    
+        Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
+        deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)    
+        dG_l = P*deltaV_l/(R*T) + x1*(numpy.log((V_l_1 - b1)/(Vmix_l - bmix))) + x2*(numpy.log((V_l_2 - b2)/(Vmix_l - bmix))) + x1*(a1/(R*T*V_l_1)) + x2*(a2/(R*T*V_l_2)) - amix/(R*T*Vmix_l)
+        return dG_l+ Gi
+#Vapour Phase:
+    V_v_1 = Volumes_1[1]
+    V_v_2 = Volumes_2[1]
+
+    if V_v_1 != 0 or V_v_2 != 0:
+    
+        Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
+        deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
+        dG_v = P*deltaV_v/(R*T) + x1*(numpy.log((V_v_1 - b1)/(Vmix_v - bmix))) + x2*(numpy.log((V_v_2 - b2)/(Vmix_v - bmix))) + x1*(a1/(R*T*V_v_1)) + x2*(a2/(R*T*V_v_2)) - amix/(R*T*Vmix_v)
+        return  dG_v+ Gi
 
 
 def deriv_dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2, s):

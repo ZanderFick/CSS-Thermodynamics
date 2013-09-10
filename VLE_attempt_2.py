@@ -36,7 +36,7 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
     else:
         Gi = 0
     
-    if V_l_1 != 0 and V_l_2 != 0:
+    if V_l_1 != 0 or V_l_2 != 0:
     
         Vmix_l = lin_mix(x1, x2, V_l_1, V_l_2)
         deltaV_l = delta_V(x1, x2, V_l_1, V_l_2)    
@@ -46,7 +46,7 @@ def dG_RT(T, P_bar, x1, Tc_1, Pc_bar_1, m_1, Tc_2, Pc_bar_2, m_2, Go1, Go2):
     V_v_1 = Volumes_1[1]
     V_v_2 = Volumes_2[1]
 
-    if V_v_1 != 0 and V_v_2 != 0:
+    if V_v_1 != 0 or V_v_2 != 0:
     
         Vmix_v = lin_mix(x1, x2, V_v_1, V_v_2)
         deltaV_v = delta_V(x1, x2, V_v_1, V_v_2)
